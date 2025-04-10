@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>DYHARD Room</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      color: white;
+    }
+    video {
+      width: 90%;
+      max-width: 600px;
+      border-radius: 15px;
+      margin: 10px;
+    }
+    h2 {
+      margin: 10px 0;
+    }
+  </style>
+</head>
+<body>
+  <h2 id="roomTitle">Joining Room...</h2>
+  <video id="localVideo" autoplay muted></video>
+  <video id="remoteVideo" autoplay></video>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const room = urlParams.get('room');
+    const name = urlParams.get('name');
+    document.getElementById("roomTitle").innerText = `Room: ${room}`;
+
+    const localVideo = document.getElementById('localVideo');
+    const remoteVideo = document.getElementById('remoteVideo');
+
+    const peerConnection = new RTCPeerConnection();
+
+    navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+      .then(stream => {
+        localVideo.srcObject = stream;
+        stream.getTracks().forEach(track => peerConnection.addTrack(track, stream));
+      });
+
+    peerConnection.ontrack = event => {
+      remoteVideo.srcObject = event.streams[0];
+    };
+
+    const ws = new WebSocket(`wss://your-signaling-server.com/ws/${room}`);
+
+    ws.onmessage = async message => {
+      const data = JSON.parse(message.data);
+      if (data.offer) {
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
+        const answer = await peerConnection.createAnswer();
+        await peerConnection.setLocalDescription(answer);
+        ws.send(JSON.stringify({ answer }));
+      } else if (data.answer) {
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
+      } else if (data.candidate) {
+        await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+      }
+    };
+
+    peerConnection.onicecandidate = event => {
+      if (event.candidate) {
+        ws.send(JSON.stringify({ candidate: event.candidate }));
+      }
+    };
+
+    ws.onopen = async () => {
+      const offer = await peerConnection.createOffer();
+      await peerConnection.setLocalDescription(offer);
+      ws.send(JSON.stringify({ offer }));
+    };
+  </script>
+</body>
+</html>
