@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>DYHARD - Direct Your Heart</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right, #1e3c72, #2a5298);
+      color: white;
+      text-align: center;
+      padding: 50px;
+    }
+    .container {
+      max-width: 500px;
+      margin: auto;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 30px;
+      border-radius: 15px;
+    }
+    input, button {
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 10px;
+      border: none;
+      font-size: 16px;
+    }
+    button {
+      background-color: #00ffcc;
+      color: black;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Welcome to DYHARD</h1>
+    <p>Start your secure Full HD video call now</p>
+    <input type="text" id="nameInput" placeholder="Enter your name" required>
+    <button onclick="startCall()">Call Now</button>
+  </div>
+
+  <script>
+    function startCall() {
+      const name = document.getElementById("nameInput").value.trim();
+      if (name) {
+        const roomId = Math.random().toString(36).substring(2, 10);
+        window.location.href = `room.html?room=${roomId}&name=${encodeURIComponent(name)}`;
+      } else {
+        alert("Please enter your name");
+      }
+    }
+  </script>
+</body>
+</html>
